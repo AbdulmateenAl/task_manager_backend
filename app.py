@@ -20,5 +20,31 @@ app = Flask(__name__)
 def home():
     return "<h1>I am him</h1><p>yh yh yh</p>"
 
+@app.route('/create', methods=["POST"])
+def create_task():
+    conn = psycopg2.connect(user=USER,
+                            password=PASSWORD,
+                            host=HOST,
+                            port=PORT,
+                            dbname=DBNAME)
+    
+    cur = conn.cursor()
+
+    cur.execute("""CREATE TABLE IF NOT EXISTS task_table(
+                user_id             FOREIGN KEY,
+                task_id             serial PRIMARY key,
+                task_title          VARCHAR(255) NOT NULL,
+                task_description    VARCHAR(255),
+                created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                status              BOOLEAN DEFAULT FALSE,
+                due_date            DATE NOT NULL
+                )""")
+
+    cur.commit()
+    print("Created table succesfully!")
+
+    cur.close()
+    conn.close()
+
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0')
