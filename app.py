@@ -1,12 +1,19 @@
 import os
 
 from flask import Flask, jsonify, request
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, set_access_cookies, unset_jwt_cookies
+
 
 import psycopg2
 from dotenv import load_dotenv
 
+app = Flask(__name__)
+
 # Load environment variables from .env
 load_dotenv()
+
+app.config['JWT_SECRET_KEY'] = os.getenv('SECRETKEY')
+jwt = JWTManager(app)
 
 # Fetch variables
 USER = os.getenv("user")
@@ -15,7 +22,6 @@ HOST = os.getenv("host")
 PORT = os.getenv("port")
 DBNAME = os.getenv("dbname")
 
-app = Flask(__name__)
 
 
 def connect_to_db():
@@ -113,14 +119,14 @@ def get_tasks():
     return jsonify({"message": "Tasks fetch successfully"})
 
 
-@app.route('/task/<id:int>', methods=['GET'])
+@app.route('/task/<int:id>', methods=['GET'])
 def get_a_task(id):
 
     try:
         conn = connect_to_db()
         cur = conn.cursor()
         cur.execute("""
-                        SELECT task_id, title, description, status, created_at, due_date FROM tasks WHERE task_id = %s,"""(id,)
+                        SELECT task_id, title, description, status, created_at, due_date FROM tasks WHERE task_id = %s,""" (id,)
                     )
         cur.close()
         conn.close()
@@ -129,7 +135,7 @@ def get_a_task(id):
     
     return jsonify({"message": f"TaskID {id} has been fetched"})
 
-@app.route('/task/<id:int>', methods=['PUT'])
+@app.route('/task/<int:id>', methods=['PUT'])
 def update_task(id):
 
     if request.content_type == 'application/json':
@@ -151,7 +157,7 @@ def update_task(id):
     
     return jsonify({"message": "Updated task successfully"})
 
-@app.route('/task/<id:int>', methods=['DELETE'])
+@app.route('/task/<int:id>', methods=['DELETE'])
 def delete_task(id):
 
     try:
